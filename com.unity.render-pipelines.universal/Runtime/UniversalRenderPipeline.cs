@@ -185,7 +185,7 @@ namespace UnityEngine.Rendering.Universal
                 }
                 else
                 {
-                    // Disable XR rendering if display contains >0 renderpass
+                    // Enable XR rendering if display contains >0 renderpass
                     if (!XRGraphics.enabled)
                         display.disableLegacyRenderer = false;
                 }
