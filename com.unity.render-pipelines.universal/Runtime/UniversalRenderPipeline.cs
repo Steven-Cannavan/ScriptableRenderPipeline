@@ -7,6 +7,9 @@ using UnityEditor.Rendering.Universal;
 #endif
 using UnityEngine.Scripting.APIUpdating;
 using Lightmapping = UnityEngine.Experimental.GlobalIllumination.Lightmapping;
+#if ENABLE_VR && ENABLE_XR_MODULE
+using UnityEngine.XR;
+#endif
 
 namespace UnityEngine.Rendering.LWRP
 {
@@ -162,6 +165,34 @@ namespace UnityEngine.Rendering.Universal
             CameraCaptureBridge.enabled = false;
         }
 
+#if ENABLE_VR && ENABLE_XR_MODULE
+        static List<XRDisplaySubsystem> xrDisplayList = new List<XRDisplaySubsystem>();
+        internal void SetupXRStates()
+        {
+            SubsystemManager.GetInstances(xrDisplayList);
+
+            if (xrDisplayList.Count > 0)
+            {
+                if (xrDisplayList.Count > 1)
+                    throw new NotImplementedException("Only 1 XR display is supported.");
+
+                XRDisplaySubsystem display = xrDisplayList[0];
+                if(display.GetRenderPassCount() == 0)
+                {
+                    // Disable XR rendering if display contains 0 renderpass
+                    if(XRGraphics.enabled)
+                        display.disableLegacyRenderer = true;
+                }
+                else
+                {
+                    // Disable XR rendering if display contains >0 renderpass
+                    if (!XRGraphics.enabled)
+                        display.disableLegacyRenderer = false;
+                }
+            }
+        }
+#endif
+
         protected override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
         {
             BeginFrameRendering(renderContext, cameras);
@@ -169,6 +200,9 @@ namespace UnityEngine.Rendering.Universal
             GraphicsSettings.lightsUseLinearIntensity = (QualitySettings.activeColorSpace == ColorSpace.Linear);
             GraphicsSettings.useScriptableRenderPipelineBatching = asset.useSRPBatcher;
             SetupPerFrameShaderConstants();
+#if ENABLE_VR && ENABLE_XR_MODULE
+            SetupXRStates();
+#endif
 
             SortCameras(cameras);
             for (int i = 0; i < cameras.Length; ++i)
