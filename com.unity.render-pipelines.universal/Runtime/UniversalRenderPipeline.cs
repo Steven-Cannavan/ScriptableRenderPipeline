@@ -180,14 +180,20 @@ namespace UnityEngine.Rendering.Universal
                 if(display.GetRenderPassCount() == 0)
                 {
                     // Disable XR rendering if display contains 0 renderpass
-                    if(XRGraphics.enabled)
+                    if(!display.disableLegacyRenderer)
+                    {
                         display.disableLegacyRenderer = true;
+                        Debug.Log("XR display is not ready. Skip XR rendering.");
+                    }
                 }
                 else
                 {
                     // Enable XR rendering if display contains >0 renderpass
-                    if (!XRGraphics.enabled)
+                    if (display.disableLegacyRenderer)
+                    {
                         display.disableLegacyRenderer = false;
+                        Debug.Log("XR display is ready. Start XR rendering.");
+                    }
                 }
             }
         }
