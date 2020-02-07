@@ -196,6 +196,7 @@ namespace UnityEditor.Rendering.Universal
 
         public new void OnEnable()
         {
+            base.OnEnable();
             m_UniversalRenderPipeline = GraphicsSettings.renderPipelineAsset as UniversalRenderPipelineAsset;
 
             m_CommonCameraSettingsFoldout = new SavedBool($"{target.GetType()}.CommonCameraSettingsFoldout", false);
@@ -398,8 +399,9 @@ namespace UnityEditor.Rendering.Universal
             m_AdditionalCameraDataCameras = m_AdditionalCameraDataSO.FindProperty("m_Cameras");
         }
 
-        public void OnDisable()
+        public new void OnDisable()
         {
+            base.OnDisable();
             m_ShowBGColorAnim.valueChanged.RemoveListener(Repaint);
             m_ShowOrthoAnim.valueChanged.RemoveListener(Repaint);
             m_ShowTargetEyeAnim.valueChanged.RemoveListener(Repaint);
@@ -436,28 +438,23 @@ namespace UnityEditor.Rendering.Universal
             settings.Update();
             UpdateAnimationValues(false);
 
-            DrawCameraType();
+            // Get the type of Camera we are using
+            CameraRenderType camType = (CameraRenderType)m_AdditionalCameraDataCameraTypeProp.intValue;
+
+            DrawCameraType(camType);
             EditorGUILayout.Space();
 
             EditorGUI.indentLevel++;
-            // Get the type of Camera we are using
-            var camType = (CameraRenderType)m_AdditionalCameraDataCameraTypeProp.intValue;
 
-            // Game Camera
+            DrawCommonSettings();
+            DrawRenderingSettings(camType);
+            DrawEnvironmentSettings(camType);
+
+            // Settings only relevant to base cameras
             if (camType == CameraRenderType.Base)
             {
-                DrawCommonSettings();
-                DrawRenderingSettings();
-                DrawEnvironmentSettings();
                 DrawOutputSettings();
                 DrawStackSettings();
-            }
-
-            // Overlay Camera
-            if (camType == CameraRenderType.Overlay)
-            {
-                DrawCommonSettings();
-                DrawRenderingSettings();
             }
 
             EditorGUI.indentLevel--;
@@ -525,20 +522,23 @@ namespace UnityEditor.Rendering.Universal
             EditorGUILayout.EndFoldoutHeaderGroup();
         }
 
-        void DrawEnvironmentSettings()
+        void DrawEnvironmentSettings(CameraRenderType camType)
         {
             m_EnvironmentSettingsFoldout.value = EditorGUILayout.BeginFoldoutHeaderGroup(m_EnvironmentSettingsFoldout.value, Styles.environmentSettingsText);
             if (m_EnvironmentSettingsFoldout.value)
             {
-                DrawClearFlags();
-
-                if (GetBackgroundType((CameraClearFlags)settings.clearFlags.intValue) == BackgroundType.SolidColor)
+                if (camType == CameraRenderType.Base)
                 {
-                    using (var group = new EditorGUILayout.FadeGroupScope(m_ShowBGColorAnim.faded))
+                    DrawClearFlags();
+
+                    if (GetBackgroundType((CameraClearFlags)settings.clearFlags.intValue) == BackgroundType.SolidColor)
                     {
-                        if (group.visible)
+                        using (var group = new EditorGUILayout.FadeGroupScope(m_ShowBGColorAnim.faded))
                         {
-                            settings.DrawBackgroundColor();
+                            if (group.visible)
+                            {
+                                settings.DrawBackgroundColor();
+                            }
                         }
                     }
                 }
@@ -549,30 +549,32 @@ namespace UnityEditor.Rendering.Universal
             EditorGUILayout.EndFoldoutHeaderGroup();
         }
 
-        void DrawRenderingSettings()
+        void DrawRenderingSettings(CameraRenderType camType)
         {
             m_RenderingSettingsFoldout.value = EditorGUILayout.BeginFoldoutHeaderGroup(m_RenderingSettingsFoldout.value, Styles.renderingSettingsText);
             if (m_RenderingSettingsFoldout.value)
             {
                 DrawRenderer();
 
-                var selectedCameraType = (CameraRenderType)m_AdditionalCameraDataCameraTypeProp.intValue;
-                if (selectedCameraType == CameraRenderType.Base)
-                    DrawPostProcessing();
-
-                if (selectedCameraType == CameraRenderType.Overlay)
+                if (camType == CameraRenderType.Base)
                 {
+                    DrawPostProcessing();
+                }
+                else if (camType == CameraRenderType.Overlay)
+                {
+                    DrawPostProcessingOverlay();
                     EditorGUILayout.PropertyField(m_AdditionalCameraClearDepth, Styles.clearDepth);
                     m_AdditionalCameraDataSO.ApplyModifiedProperties();
-                    DrawPostProcessingOverlay();
                 }
 
-                DrawOpaqueTexture();
-                DrawDepthTexture();
                 DrawRenderShadows();
 
-                if (selectedCameraType == CameraRenderType.Base)
+                if (camType == CameraRenderType.Base)
+                {
                     DrawPriority();
+                    DrawOpaqueTexture();
+                    DrawDepthTexture();
+                }
 
                 settings.DrawCullingMask();
                 settings.DrawOcclusionCulling();
@@ -620,7 +622,7 @@ namespace UnityEditor.Rendering.Universal
             {
                 DrawTargetTexture();
 
-                if(camera.targetTexture == null)
+                if (camera.targetTexture == null)
                 {
                     DrawHDR();
                     DrawMSAA();
@@ -628,7 +630,10 @@ namespace UnityEditor.Rendering.Universal
                     settings.DrawDynamicResolution();
                     settings.DrawMultiDisplay();
                 }
-                // Third option comes later.
+                else
+                {
+                    settings.DrawNormalizedViewPort();
+                }
 
                 EditorGUILayout.Space();
                 EditorGUILayout.Space();
@@ -638,13 +643,10 @@ namespace UnityEditor.Rendering.Universal
             EditorGUILayout.EndFoldoutHeaderGroup();
         }
 
-        void DrawCameraType()
+        void DrawCameraType(CameraRenderType camType)
         {
-            CameraRenderType selectedCameraType;
-            selectedCameraType = (CameraRenderType)m_AdditionalCameraDataCameraTypeProp.intValue;
-
             EditorGUI.BeginChangeCheck();
-            int selCameraType = EditorGUILayout.IntPopup(Styles.cameraType, (int)selectedCameraType, Styles.m_CameraTypeNames.ToArray(), Styles.additionalDataCameraTypeOptions);
+            int selCameraType = EditorGUILayout.IntPopup(Styles.cameraType, (int)camType, Styles.m_CameraTypeNames.ToArray(), Styles.additionalDataCameraTypeOptions);
             if (EditorGUI.EndChangeCheck())
             {
                 m_AdditionalCameraDataCameraTypeProp.intValue = selCameraType;
