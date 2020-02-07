@@ -275,7 +275,7 @@ namespace UnityEngine.Rendering.Universal
                 return;
             }
 
-            if (!camera.TryGetCullingParameters( IsStereoEnabled(camera), out var cullingParameters))
+            if (!camera.TryGetCullingParameters(IsStereoEnabled(camera), out var cullingParameters))
                 return;
 
             SetupPerCameraShaderConstants(cameraData);
