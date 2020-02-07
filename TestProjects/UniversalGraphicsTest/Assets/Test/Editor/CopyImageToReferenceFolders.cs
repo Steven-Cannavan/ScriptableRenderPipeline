@@ -3,6 +3,7 @@ using UnityEditor;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 public class CopyImageToReferenceFolders
 {
@@ -22,11 +23,27 @@ public class CopyImageToReferenceFolders
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Copied \"" + imageName + "\" to...");
-            foreach (string rootfolder in EnumerateLeafFolders(referenceImagesPath))
+            string[] leafFolders = EnumerateLeafFolders(referenceImagesPath).ToArray<string>();
+            float numOfLeafFolders = leafFolders.Length;
+
+            for (int i = 0; i < numOfLeafFolders; i++)
             {
-                sb.AppendLine("-> " + rootfolder);
-                AssetDatabase.CopyAsset(pathToOriginalImage, Path.Combine(rootfolder, imageName));
+                string leafFolder = leafFolders[i];
+                if (EditorUtility.DisplayCancelableProgressBar(
+                        "Copy " + imageName + " to ReferenceImages",
+                        string.Format("({0} of {1}) {2}", i, numOfLeafFolders, leafFolder),
+                        i / numOfLeafFolders)
+                    )
+                {
+                    break;
+                }
+
+                AssetDatabase.CopyAsset(pathToOriginalImage, Path.Combine(leafFolder, imageName));
+                sb.AppendLine("-> " + leafFolder);
             }
+            
+            EditorUtility.ClearProgressBar();
+            
             Debug.Log(sb);
         }
     }
