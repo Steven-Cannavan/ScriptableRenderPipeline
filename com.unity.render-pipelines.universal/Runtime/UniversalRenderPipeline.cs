@@ -167,6 +167,7 @@ namespace UnityEngine.Rendering.Universal
 
 #if ENABLE_VR && ENABLE_XR_MODULE
         static List<XRDisplaySubsystem> xrDisplayList = new List<XRDisplaySubsystem>();
+        static bool xrSkipRender = false;
         internal void SetupXRStates()
         {
             SubsystemManager.GetInstances(xrDisplayList);
@@ -180,18 +181,18 @@ namespace UnityEngine.Rendering.Universal
                 if(display.GetRenderPassCount() == 0)
                 {
                     // Disable XR rendering if display contains 0 renderpass
-                    if(!display.disableLegacyRenderer)
+                    if(!xrSkipRender)
                     {
-                        display.disableLegacyRenderer = true;
+                        xrSkipRender = true;
                         Debug.Log("XR display is not ready. Skip XR rendering.");
                     }
                 }
                 else
                 {
                     // Enable XR rendering if display contains >0 renderpass
-                    if (display.disableLegacyRenderer)
+                    if (xrSkipRender)
                     {
-                        display.disableLegacyRenderer = false;
+                        xrSkipRender = false;
                         Debug.Log("XR display is ready. Start XR rendering.");
                     }
                 }
@@ -208,6 +209,8 @@ namespace UnityEngine.Rendering.Universal
             SetupPerFrameShaderConstants();
 #if ENABLE_VR && ENABLE_XR_MODULE
             SetupXRStates();
+            if(xrSkipRender)
+                return;
 #endif
 
             SortCameras(cameras);
@@ -272,7 +275,7 @@ namespace UnityEngine.Rendering.Universal
                 return;
             }
 
-            if (!camera.TryGetCullingParameters(IsStereoEnabled(camera), out var cullingParameters))
+            if (!camera.TryGetCullingParameters( IsStereoEnabled(camera), out var cullingParameters))
                 return;
 
             SetupPerCameraShaderConstants(cameraData);
