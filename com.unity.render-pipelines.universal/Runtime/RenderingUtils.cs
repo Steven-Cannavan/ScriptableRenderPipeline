@@ -63,7 +63,7 @@ namespace UnityEngine.Rendering.Universal
         public static UnityEngine.Rendering.PostProcessing.PostProcessRenderContext postProcessRenderContext => null;
 #endif
 
-        internal static bool useStructuredBuffer
+        public static bool useStructuredBuffer
         {
             // There are some performance issues with StructuredBuffers in some platforms.
             // We fallback to UBO in those cases.

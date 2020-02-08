@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace UnityEngine.Rendering.Universal
 {
-    class ShaderData : IDisposable
+    public class ShaderData : IDisposable
     {
         static ShaderData m_Instance = null;
         ComputeBuffer m_LightDataBuffer = null;
@@ -16,7 +16,7 @@ namespace UnityEngine.Rendering.Universal
         {
         }
 
-        internal static ShaderData instance
+        public static ShaderData instance
         {
             get
             {
@@ -45,12 +45,12 @@ namespace UnityEngine.Rendering.Universal
             return GetOrUpdateBuffer<int>(ref m_LightIndicesBuffer, size);
         }
 
-        internal ComputeBuffer GetShadowDataBuffer(int size)
+        public ComputeBuffer GetShadowDataBuffer(int size)
         {
             return GetOrUpdateBuffer<ShaderInput.ShadowData>(ref m_ShadowDataBuffer, size);
         }
 
-        internal ComputeBuffer GetShadowIndicesBuffer(int size)
+        public ComputeBuffer GetShadowIndicesBuffer(int size)
         {
             return GetOrUpdateBuffer<int>(ref m_ShadowIndicesBuffer, size);
         }
