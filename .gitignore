@@ -34,5 +34,11 @@
 ShaderGraph/DebugOutput.meta
 ShaderGraph/DebugOutput/**
 ShaderGraph/Testing/IntegrationTests/.Failed
-TestProjects/*/ProjectSettings/ProjectVersion.txt
+TestProjects/
+Tools/
+com.unity.testframework.graphics/
+com.unity.testing.visualeffectgraph/
+com.unity.testing.hdrp/
+com.unity.render-pipelines.high-definition/
+com.unity.render-pipelines.high-definition-config/
 
